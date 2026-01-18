@@ -31,7 +31,6 @@
         .btn-ex { background: var(--v); }
         .btn-edit { background: #555; }
         .btn-del { background: none; color: #d9534f; border: none; cursor: pointer; font-size: 10px; margin-top: 5px; font-weight: bold; }
-        
         @media print { 
             body { background: white; padding: 0; }
             .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
@@ -47,7 +46,7 @@
 <div class="container">
     <header>
         <h1>Empyrean International School</h1>
-        <small style="color:var(--a); font-weight:bold;">Live Cloud Ledger - Session 2025-26</small>
+        <small style="color:var(--a); font-weight:bold;">Student Fee Ledger - Session 2025-26</small>
     </header>
 
     <div class="stats no-print">
@@ -73,11 +72,11 @@
         </div>
     </div>
 
-    <div class="no-print" style="margin-bottom:15px; display:flex; gap:10px;">
-        <input type="text" id="search" placeholder="Search student name..." onkeyup="render()" style="flex:1; padding:10px; border-radius:5px; border:1px solid #ccc;">
-        <button class="btn" style="background:#333; width:150px; margin:0;" onclick="window.print()">Print Summary</button>
-        <button class="btn" style="background:var(--v); width:150px; margin:0;" onclick="exportData()">Backup Data</button>
-        <button class="btn" style="background:var(--b); width:150px; margin:0;" onclick="importData()">Restore Data</button>
+    <div class="no-print" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap: wrap;">
+        <input type="text" id="search" placeholder="Search name..." onkeyup="render()" style="flex:1; padding:10px; border-radius:5px; border:1px solid #ccc;">
+        <button class="btn" style="background:#333; width:130px; margin:0; height:40px;" onclick="window.print()">Print Report</button>
+        <button class="btn" style="background:#28a745; width:130px; margin:0; height:40px;" onclick="copySyncCode()">Copy Sync Code</button>
+        <button class="btn" style="background:#007bff; width:130px; margin:0; height:40px;" onclick="pasteSyncCode()">Paste Sync Code</button>
     </div>
 
     <table>
@@ -145,32 +144,27 @@
         }
     }
 
-    /* BACKUP & RESTORE LOGIC */
-    function exportData() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "EIS_Backup_2025_26.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+    function copySyncCode() {
+        const syncData = JSON.stringify(db);
+        navigator.clipboard.writeText(syncData).then(() => {
+            alert("Sync Code Copied! Paste this into WhatsApp and send it to your phone.");
+        });
     }
 
-    function importData() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.readAsText(file,'UTF-8');
-            reader.onload = readerEvent => {
-                const content = readerEvent.target.result;
-                db = JSON.parse(content);
-                save();
-                location.reload();
+    function pasteSyncCode() {
+        const code = prompt("Paste the Sync Code from WhatsApp here:");
+        if (code) {
+            try {
+                const importedDb = JSON.parse(code);
+                if (importedDb.students) {
+                    db = importedDb;
+                    save();
+                    alert("Data Synced Successfully!");
+                }
+            } catch (e) {
+                alert("Invalid Code! Make sure you copy the entire WhatsApp message.");
             }
         }
-        input.click();
     }
 
     function save() { localStorage.setItem('EIS_GITHUB_LIVE', JSON.stringify(db)); render(); }
@@ -215,8 +209,8 @@
             list.innerHTML += `<tr>
                 <td><b>${s.name}</b><br><small>${s.cls}</small><div class="no-print"><button class="btn-del" onclick="removeStudent(${s.id})">🗑 Delete</button></div></td>
                 <td>${mHtml}${eHtml}</td>
-                <td><div class="summary-box">Fee Paid: ₹${s.paid}<br>Exm Paid: ₹${s.ePaid}<br><hr><b>CF: ₹${carryForward}</b> (F)<br><b>CF: ₹${carryForwardEx}</b> (E)</div></td>
-                <td><div class="arrears-box">Fee Due: ₹${mDue}<br><small>${unpaidMonths.join(', ')}</small><hr>Exm Due: ₹${eDue}<br><small>${unpaidExams.join(', ')}</small></div></td>
+                <td><div class="summary-box">Fee: ₹${s.paid}<br>Exm: ₹${s.ePaid}<br><hr><b>CF: ₹${carryForward}</b> (F)<br><b>CF: ₹${carryForwardEx}</b> (E)</div></td>
+                <td><div class="arrears-box">Fee: ₹${mDue}<br><small>${unpaidMonths.join(', ')}</small><hr>Exm: ₹${eDue}<br><small>${unpaidExams.join(', ')}</small></div></td>
                 <td class="no-print"><button class="btn btn-pay" onclick="receiveMoney(${s.id},'m')">Pay Fee</button><button class="btn btn-ex" onclick="receiveMoney(${s.id},'e')">Pay Exm</button><button class="btn btn-edit" onclick="correctMistake(${s.id})">✎ Edit</button></td>
             </tr>`;
             t1++; t2+=(s.paid+s.ePaid); t3+=mDue; t4+=eDue;
