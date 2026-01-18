@@ -24,18 +24,18 @@
         .current { border: 2px solid var(--p); color: #333; }
         .summary-box, .dues-box { padding: 10px; border-radius: 8px; font-size: 12px; line-height: 1.5; min-height: 95px; margin-bottom: 5px; }
         .summary-box { background: #f8f9fa; border: 1px solid #eee; }
-        .dues-box { background: #fff5f5; color: var(--a); border: 1px solid #feb2b2; font-weight: bold; }
-        .btn { padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 11px; width: 100%; margin-bottom: 6px; display: block; }
+        .dues-box { background: #fff5f5; color: var(--a); border: 1px solid #feb2b2; font-weight: bold; position: relative; }
+        .btn { padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 11px; width: 100%; margin-bottom: 6px; display: block; text-decoration: none; text-align: center; }
         .btn-add { background: var(--g); height: 36px; padding: 0 15px; margin-bottom: 0 !important; }
         .btn-pay { background: var(--p); }
         .btn-ex { background: var(--v); }
+        .btn-notify { background: #25D366; font-size: 9px; padding: 4px; margin-top: 5px; } /* WhatsApp Green */
         .btn-edit { background: #555; }
         .btn-del { background: none; color: #d9534f; border: none; cursor: pointer; font-size: 10px; margin-top: 5px; font-weight: bold; }
 
         @media print { 
             body { background: white; padding: 0; }
             .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
-            /* Hide non-essential columns for Dues Report */
             .no-print, th:nth-child(2), th:nth-child(3), th:nth-child(5), 
             td:nth-child(2), td:nth-child(3), td:nth-child(5) { display: none !important; }
             table { border: 1px solid #000; }
@@ -170,6 +170,14 @@
         }
     }
 
+    function generateReminder(name, tDue, eDue) {
+        const total = tDue + eDue;
+        const msg = `Dear Parent, this is a reminder from Empyrean International School. Outstanding dues for ${name}: Tuition Fee ₹${tDue}, Exam Fee ₹${eDue}. Total: ₹${total}. Please clear the dues at the earliest. Thank you.`;
+        navigator.clipboard.writeText(msg).then(() => {
+            alert("Reminder message copied! Now paste it in WhatsApp or SMS.");
+        });
+    }
+
     function save() { localStorage.setItem('EIS_GITHUB_LIVE', JSON.stringify(db)); render(); }
 
     function render() {
@@ -213,7 +221,12 @@
                 <td><b>${s.name}</b><br><small>${s.cls}</small><div class="no-print"><button class="btn-del" onclick="removeStudent(${s.id})">🗑 Delete</button></div></td>
                 <td>${mHtml}${eHtml}</td>
                 <td><div class="summary-box">Fee: ₹${s.paid}<br>Exm: ₹${s.ePaid}<br><hr><b>CF: ₹${carryForward}</b> (F)<br><b>CF: ₹${carryForwardEx}</b> (E)</div></td>
-                <td><div class="dues-box">Fee Dues: ₹${mDue}<br><small>${unpaidMonths.join(', ')}</small><hr>Exm Dues: ₹${eDue}<br><small>${unpaidExams.join(', ')}</small></div></td>
+                <td>
+                    <div class="dues-box">
+                        Fee Dues: ₹${mDue}<br><small>${unpaidMonths.join(', ')}</small><hr>Exm Dues: ₹${eDue}<br><small>${unpaidExams.join(', ')}</small>
+                        <button class="btn btn-notify no-print" onclick="generateReminder('${s.name}', ${mDue}, ${eDue})">📋 Copy Reminder</button>
+                    </div>
+                </td>
                 <td class="no-print"><button class="btn btn-pay" onclick="receiveMoney(${s.id},'m')">Pay Fee</button><button class="btn btn-ex" onclick="receiveMoney(${s.id},'e')">Pay Exm</button><button class="btn btn-edit" onclick="correctMistake(${s.id})">✎ Edit</button></td>
             </tr>`;
             t1++; t2+=(s.paid+s.ePaid); t3+=mDue; t4+=eDue;
