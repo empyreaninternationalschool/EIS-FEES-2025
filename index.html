@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EIS Ledger - Session 2025-26</title>
+    <style>
+        :root { --p: #1a3c6d; --a: #d9534f; --g: #28a745; --y: #f1c40f; --b: #3498db; --v: #9b59b6; --dark: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; color: var(--dark); }
+        .container { max-width: 1650px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 10px solid var(--a); }
+        header { text-align: center; margin-bottom: 25px; }
+        h1 { color: var(--p); text-transform: uppercase; margin: 0; font-size: 24px; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { padding: 15px; border-radius: 10px; color: white; text-align: center; }
+        .panel { background: #fdfdfd; padding: 20px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; border-left: 5px solid var(--p); }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; align-items: flex-end; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background: var(--p); color: white; padding: 12px; font-size: 12px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 13px; word-wrap: break-word; }
+        .m-grid { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+        .m-dot { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 9px; font-weight: bold; color: white; background: #e0e0e0; flex-shrink: 0; }
+        .full-paid { background: var(--g) !important; }
+        .partial-paid { background: linear-gradient(135deg, var(--g) 50%, var(--y) 50%) !important; color: #000 !important; border: 1px solid #999; }
+        .unpaid { background: var(--y); color: #000; }
+        .current { border: 2px solid var(--p); color: #333; }
+        .summary-box, .arrears-box { padding: 10px; border-radius: 8px; font-size: 12px; line-height: 1.5; min-height: 95px; margin-bottom: 5px; }
+        .summary-box { background: #f8f9fa; border: 1px solid #eee; }
+        .arrears-box { background: #fff5f5; color: var(--a); border: 1px solid #feb2b2; font-weight: bold; }
+        .btn { padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; font-size: 11px; width: 100%; margin-bottom: 6px; display: block; }
+        .btn-add { background: var(--g); height: 36px; padding: 0 15px; margin-bottom: 0 !important; }
+        .btn-pay { background: var(--p); }
+        .btn-ex { background: var(--v); }
+        .btn-edit { background: #555; }
+        .btn-del { background: none; color: #d9534f; border: none; cursor: pointer; font-size: 10px; margin-top: 5px; font-weight: bold; }
+        
+        @media print { 
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .no-print, th:nth-child(2), th:nth-child(4), th:nth-child(5), 
+            td:nth-child(2), td:nth-child(4), td:nth-child(5) { display: none !important; }
+            table { border: 1px solid #000; }
+            th, td { border: 1px solid #000; width: 50% !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Empyrean International School</h1>
+        <small style="color:var(--a); font-weight:bold;">Live Cloud Ledger - Session 2025-26</small>
+    </header>
+
+    <div class="stats no-print">
+        <div class="stat-card" style="background:var(--b)">Total Students<br><b id="s1">0</b></div>
+        <div class="stat-card" style="background:var(--g)">Total Collection<br><b id="s2">0</b></div>
+        <div class="stat-card" style="background:var(--a)">Tuition Arrears<br><b id="s3">0</b></div>
+        <div class="stat-card" style="background:var(--v)">Exam Arrears<br><b id="s4">0</b></div>
+    </div>
+
+    <div class="panel no-print">
+        <div class="input-row">
+            <div style="flex: 2;"><label>Name</label><input type="text" id="n" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></div>
+            <div style="flex: 1.2;"><label>Class</label><select id="c" onchange="autoFill()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="">Select</option>
+                <option value="Nur.">Nur.</option><option value="KG-1">KG-1</option><option value="KG-2">KG-2</option>
+                <option value="1st">1st</option><option value="2nd">2nd</option><option value="3rd">3rd</option>
+                <option value="4th">4th</option><option value="5th">5th</option><option value="6th">6th</option>
+                <option value="7th">7th</option><option value="8th">8th</option>
+            </select></div>
+            <div style="flex: 1;"><label>Fee</label><input type="number" id="mf" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></div>
+            <div style="flex: 1;"><label>Exam</label><input type="number" id="ef" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></div>
+            <div style="flex: 0.8;"><button class="btn btn-add" onclick="addStudent()">+ Add</button></div>
+        </div>
+    </div>
+
+    <div class="no-print" style="margin-bottom:15px; display:flex; gap:10px;">
+        <input type="text" id="search" placeholder="Search student name..." onkeyup="render()" style="flex:1; padding:10px; border-radius:5px; border:1px solid #ccc;">
+        <button class="btn" style="background:#333; width:150px; margin:0;" onclick="window.print()">Print Summary</button>
+        <button class="btn" style="background:var(--v); width:150px; margin:0;" onclick="exportData()">Backup Data</button>
+        <button class="btn" style="background:var(--b); width:150px; margin:0;" onclick="importData()">Restore Data</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Info</th>
+                <th width="35%">Timeline Tracker</th>
+                <th width="20%">Summary</th>
+                <th width="20%">Arrears</th>
+                <th width="10%" class="no-print">Manage</th>
+            </tr>
+        </thead>
+        <tbody id="list"></tbody>
+    </table>
+</div>
+
+<script>
+    const chart = { "Nur.":600, "KG-1":650, "KG-2":700, "1st":750, "2nd":800, "3rd":950, "4th":1000, "5th":1050, "6th":1100, "7th":1200, "8th":1300 };
+    const exChart = { "Nur.":300, "KG-1":300, "KG-2":300, "1st":380, "2nd":380, "3rd":420, "4th":420, "5th":450, "6th":500, "7th":500, "8th":500 };
+    const months = ["Apr", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+    const mIdx = [3, 6, 7, 8, 9, 10, 11, 0, 1, 2];
+    const examConfig = [{n:"Quarterly", p:3}, {n:"Half-Yearly", p:6}, {n:"Final", p:9}];
+
+    let db = JSON.parse(localStorage.getItem('EIS_GITHUB_LIVE')) || { students: [] };
+
+    function autoFill() {
+        let v = document.getElementById('c').value;
+        if(v) { document.getElementById('mf').value = chart[v]; document.getElementById('ef').value = exChart[v]; }
+    }
+
+    function addStudent() {
+        let n = document.getElementById('n').value.trim();
+        let c = document.getElementById('c').value;
+        let mf = parseFloat(document.getElementById('mf').value);
+        let ef = parseFloat(document.getElementById('ef').value);
+        if(n && c) {
+            db.students.push({id:Date.now(), name:n, cls:c, mFee:mf, eFee:ef, paid:0, ePaid:0});
+            save();
+            document.getElementById('n').value = '';
+        }
+    }
+
+    function receiveMoney(id, type) {
+        let a = prompt("Enter Amount (₹):");
+        if(a) {
+            let s = db.students.find(x => x.id == id);
+            if(type == 'm') s.paid += parseFloat(a); else s.ePaid += parseFloat(a);
+            save();
+        }
+    }
+
+    function correctMistake(id) {
+        let s = db.students.find(x => x.id == id);
+        let newT = prompt("Total Tuition Paid:", s.paid);
+        let newE = prompt("Total Exam Paid:", s.ePaid);
+        if(newT !== null) s.paid = parseFloat(newT) || 0;
+        if(newE !== null) s.ePaid = parseFloat(newE) || 0;
+        save();
+    }
+
+    function removeStudent(id) {
+        if(confirm("Delete student?")) {
+            db.students = db.students.filter(x => x.id != id);
+            save();
+        }
+    }
+
+    /* BACKUP & RESTORE LOGIC */
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "EIS_Backup_2025_26.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file,'UTF-8');
+            reader.onload = readerEvent => {
+                const content = readerEvent.target.result;
+                db = JSON.parse(content);
+                save();
+                location.reload();
+            }
+        }
+        input.click();
+    }
+
+    function save() { localStorage.setItem('EIS_GITHUB_LIVE', JSON.stringify(db)); render(); }
+
+    function render() {
+        const list = document.getElementById('list');
+        const search = document.getElementById('search').value.toLowerCase();
+        const curM = new Date().getMonth();
+        const curPos = mIdx.indexOf(curM);
+        list.innerHTML = '';
+        let t1=0, t2=0, t3=0, t4=0;
+
+        db.students.forEach(s => {
+            if(!s.name.toLowerCase().includes(search)) return;
+            let pool = s.paid;
+            let mHtml = '<div class="m-grid">';
+            let unpaidMonths = [], partialMonthName = "", carryForward = 0;
+            months.forEach((m, i) => {
+                let status = "";
+                if(pool >= s.mFee) { status = "full-paid"; pool -= s.mFee; }
+                else if(pool > 0) { status = "partial-paid"; partialMonthName = m; carryForward = pool; pool = 0; }
+                else { status = (i === curPos) ? "current" : (i < curPos ? "unpaid" : "future"); if(i < curPos) unpaidMonths.push(m); }
+                mHtml += `<div class="m-dot ${status}">${m}</div>`;
+            });
+            mHtml += '</div>';
+
+            let poolE = s.ePaid;
+            let eHtml = '<div class="m-grid">';
+            let unpaidExams = [], partialExName = "", carryForwardEx = 0;
+            examConfig.forEach((ex) => {
+                let status = "";
+                if(poolE >= s.eFee) { status = "full-paid"; poolE -= s.eFee; }
+                else if(poolE > 0) { status = "partial-paid"; partialExName = ex.n; carryForwardEx = poolE; poolE = 0; }
+                else { status = (ex.p < curPos) ? "unpaid" : "future"; if(ex.p < curPos) unpaidExams.push(ex.n); }
+                eHtml += `<div class="m-dot ${status}" style="width:85px;">${ex.n}</div>`;
+            });
+            eHtml += '</div>';
+
+            let mDue = (unpaidMonths.length * s.mFee) + (partialMonthName ? (s.mFee - carryForward) : 0);
+            let eDue = (unpaidExams.length * s.eFee) + (partialExName ? (s.eFee - carryForwardEx) : 0);
+
+            list.innerHTML += `<tr>
+                <td><b>${s.name}</b><br><small>${s.cls}</small><div class="no-print"><button class="btn-del" onclick="removeStudent(${s.id})">🗑 Delete</button></div></td>
+                <td>${mHtml}${eHtml}</td>
+                <td><div class="summary-box">Fee Paid: ₹${s.paid}<br>Exm Paid: ₹${s.ePaid}<br><hr><b>CF: ₹${carryForward}</b> (F)<br><b>CF: ₹${carryForwardEx}</b> (E)</div></td>
+                <td><div class="arrears-box">Fee Due: ₹${mDue}<br><small>${unpaidMonths.join(', ')}</small><hr>Exm Due: ₹${eDue}<br><small>${unpaidExams.join(', ')}</small></div></td>
+                <td class="no-print"><button class="btn btn-pay" onclick="receiveMoney(${s.id},'m')">Pay Fee</button><button class="btn btn-ex" onclick="receiveMoney(${s.id},'e')">Pay Exm</button><button class="btn btn-edit" onclick="correctMistake(${s.id})">✎ Edit</button></td>
+            </tr>`;
+            t1++; t2+=(s.paid+s.ePaid); t3+=mDue; t4+=eDue;
+        });
+        document.getElementById('s1').innerText = t1;
+        document.getElementById('s2').innerText = "₹" + t2;
+        document.getElementById('s3').innerText = "₹" + t3;
+        document.getElementById('s4').innerText = "₹" + t4;
+    }
+    render();
+</script>
+</body>
+</html>
